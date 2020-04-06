@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+DOTNET_LOCATION=${BUILD_DIR}/dotnet
+mkdir -p ${DOTNET_LOCATION}
+
+curl -sSL -o dotnet.tar.gz https://download.microsoft.com/download/1/B/4/1B4DE605-8378-47A5-B01B-2C79D6C55519/dotnet-sdk-2.0.0-linux-x64.tar.gz
+tar zxf dotnet.tar.gz -C ${DOTNET_LOCATION}
+
+export PATH="${DOTNET_LOCATION}:${PATH}"
+cat <<EOF >$BUILD_DIR/.profile.d/000_dotnet.sh
+export PATH="\$HOME/dotnet:\$PATH"
+EOF
+
+cd $BUILD_DIR
+dotnet --info
+
+# run on  each project we need to publish, build it and deploy it
+ while IFS=';' read -ra ADDR; do
+      for i in "${ADDR[@]}"; do
+			PROJECT_DIR=${SRC_DIR}/$i
+			PROJECT_DIR_NAME=$(basename $PROJECT_DIR)
+			PROJECT_FILE=${SRC_DIR}/$i/$PROJECT_DIR_NAME.csproj
+			
+			echo "Restoring packages for ${PROJECT_DIR_NAME}"
+			dotnet restore --runtime linux-x64 ${PROJECT_FILE}
+
+			echo "Publishing ${PROJECT_DIR_NAME}"
+			dotnet publish ${PROJECT_FILE} --output ${BUILD_DIR}/heroku_output/${PROJECT_DIR_NAME} --runtime linux-x64 --configuration Release
+
+			echo "Publish of '$PROJECT_DIR_NAME' successed"
+      done
+ done <<< "$PROJECTS"
+ 
