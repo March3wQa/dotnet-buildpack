@@ -53,7 +53,10 @@ elif [ -n "$( find $SRC_DIR -maxdepth 3 -iname *.csproj )" ]; then
   echo "'csproj' project type detected"
   FIRST_DEPLOY_PROJECT=(${PROJECTS[@]})
   TARGET_VERSION=$(grep -oPm1 "(?<=<TargetFramework>netcoreapp)[^<]+" <$(find $SRC_DIR/$FIRST_DEPLOY_PROJECT/*.csproj))
-  if [[ $TARGET_VERSION == 2.* ]]; then
+  if [[ $TARGET_VERSION == 3.* ]]; then
+    echo "Target version in .net core 3"
+    source $BUILDPACK_DIR/bin/compile-csproj-3
+  elif [[ $TARGET_VERSION == 2.* ]]; then
     echo "Target version is .net core 2"
     source $BUILDPACK_DIR/bin/compile-csproj-2
   elif [[ $TARGET_VERSION == 1.* ]]; then
